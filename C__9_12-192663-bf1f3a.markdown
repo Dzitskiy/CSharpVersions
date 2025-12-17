@@ -1,0 +1,1468 @@
+---
+jupyter:
+  kernelspec:
+    display_name: ".NET (C#)"
+    language: "C#"
+    name: .net-csharp
+  language_info:
+    file_extension: .cs
+    mimetype: text/x-csharp
+    name: "C#"
+    pygments_lexer: csharp
+    version: 9.0
+  nbformat: 4
+  nbformat_minor: 2
+  orig_nbformat: 4
+  polyglot_notebook:
+    kernelInfo:
+      defaultKernelName: csharp
+      items:
+      - name: csharp
+---
+
+::: {.cell .markdown}
+# C# 9-12: Что нового в языке?
+
+### Сроки поддержки
+
+![sberv](https://visualstudiomagazine.com/articles/2021/11/08/~/media/ECG/visualstudiomagazine/Images/2021/10/net_release_cadence.asxh)
+:::
+
+::: {.cell .markdown}
+# C# 9 и версия .NET 5 {#c-9-и-версия-net-5}
+:::
+
+::: {.cell .markdown}
+### Атрибуты локальных функций
+:::
+
+::: {.cell .code execution_count="1" dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+using System.Diagnostics.CodeAnalysis;
+
+public void Demo()
+{
+    static bool IsValid([NotNullWhen(returnValue: true)] string? str)
+    {
+        return !string.IsNullOrEmpty(value: str);
+    }
+
+    string? myStr = null;
+    if (IsValid(str: myStr))
+    {
+        int myStrLength = myStr.Length;
+            Console.WriteLine(value: myStrLength);
+    }
+
+    string? myStr2 = "Hello";
+    if (IsValid(str: myStr2))
+    {
+        int myStr2Length = myStr2.Length;
+        Console.WriteLine(value: myStr2Length);
+    }
+}
+
+Demo();
+```
+
+::: {.output .stream .stdout}
+    5
+:::
+:::
+
+::: {.cell .markdown}
+### Переопределение возвращаемого типа у метода
+:::
+
+::: {.cell .code execution_count="2" dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+public class CovariantReturnTypes
+{
+    private abstract class BaseClass
+    {
+        public abstract Shape GetShape();
+    }
+
+    private class ChildClass : BaseClass
+    {
+        // класс Square должен быть наследником Shape
+        public override Square GetShape()
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    private abstract class Shape
+    {
+
+    }
+
+    private class Square : Shape
+    {
+
+    }
+}
+```
+:::
+
+::: {.cell .markdown}
+### Расширение частичных методов
+:::
+
+::: {.cell .code execution_count="4" dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+public class ExtendingPartialMethods
+{
+    private partial class MyClass
+    {
+        public partial string GetMessage(int param);
+    }
+
+    private partial class MyClass
+    {
+        public partial string GetMessage(int param)
+        {
+            return $"Message: {param}.";
+        }
+    }
+    
+    public void Demo()
+    {
+        MyClass myClass = new MyClass();
+        Console.WriteLine(value: myClass.GetMessage(param: 1));
+    }
+}
+
+new ExtendingPartialMethods().Demo();
+```
+
+::: {.output .stream .stdout}
+    Message: 1.
+:::
+:::
+
+::: {.cell .markdown}
+### Расширение GetEnumerator
+:::
+
+::: {.cell .code execution_count="6" dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+using System.Collections.Generic;
+
+public static IEnumerator<T> GetEnumerator<T>(this ValueTuple<T, T, T> source)
+{
+    yield return source.Item1;
+    yield return source.Item2;
+    yield return source.Item3;
+}
+
+public class ExtensionGetEnumerator
+{
+    public void Demo()
+    {
+        (int, int, int) valueTuple = (1, 2, 3);
+        foreach (int value in valueTuple)
+        {
+            Console.WriteLine(value: value);
+        }
+    }
+}
+
+new ExtensionGetEnumerator().Demo();
+```
+
+::: {.output .stream .stdout}
+    1
+    2
+    3
+:::
+:::
+
+::: {.cell .markdown}
+### InitOnlySetters
+:::
+
+::: {.cell .code execution_count="12" dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+public class InitOnlySetters
+{
+    public void Demo()
+    {
+        var f = new Fancy { Name = "Otus1" };
+
+        Console.WriteLine(f.Name + "1");
+        // f.Name = "Foo";
+        Console.WriteLine(f.Name);
+    }
+
+    class Fancy
+    {
+        private readonly string _name;
+        public string Name
+        {
+            get
+            {
+                return _name;
+            }
+
+            init
+            {
+                Console.WriteLine("Hello");
+                _name = value;
+            }
+        }
+    }
+}
+
+var a = new InitOnlySetters();
+a.Demo();
+```
+
+::: {.output .stream .stdout}
+    Hello
+    Otus11
+    Otus1
+:::
+:::
+
+::: {.cell .markdown}
+### Lambda discard parameters
+:::
+
+::: {.cell .code execution_count="7" dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+public class LambdaDiscardParameters
+{
+    private static void ShowMessage(Func<int, string, string> convert)
+    {
+        string result = convert(arg1: 100, arg2: "Hello world!");
+        Console.WriteLine(value: result);
+    }
+
+    public void Demo()
+    {
+        ShowMessage(convert: (_, _) => "New message");
+    }
+}
+
+var a = new LambdaDiscardParameters();
+a.Demo();
+```
+
+::: {.output .stream .stdout}
+    New message
+:::
+:::
+
+::: {.cell .markdown}
+### Pattern Matching
+:::
+
+::: {.cell .code execution_count="13" dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+class Engine
+{
+    public string Name { get; set; }
+}
+
+class FancyCar
+{
+    public Engine Engine { get; set; }
+}
+
+private class Shape
+{
+    public decimal Area { get; set; }
+    public bool IsColored { get; set; }
+}
+
+private class Square : Shape
+{
+
+}
+
+private class Triangle : Shape
+{
+
+}
+
+private class Circle : Shape
+{
+
+}
+
+private enum TimeOfTheDay
+{
+    Morning,
+    Afternoon,
+    Evening,
+    Night
+}
+```
+:::
+
+::: {.cell .code execution_count="15" dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+var s = new Square();
+
+// Проверка на тип
+Square square = new Square();
+if (square is not Shape)
+{
+    // some code
+}
+
+var s2 = new object();
+if (s2 as Shape is { IsColored: true, Area: > 0 }){
+}
+
+// Проверки свойств
+if (square is { IsColored: true, Area: > 0 })
+{
+    // some code
+}
+    
+// Раньше было ~лучше~
+if (square.IsColored && square.Area > 0)
+{
+    // some code
+}
+
+if (square is { Area: > 0 and (< 100 or 5) })
+{
+    // some code
+}
+
+```
+:::
+
+::: {.cell .code execution_count="24" dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+static decimal CalculateToll(object shape) =>
+    shape switch
+    {
+        Square sq => sq.Area + 2.00m,
+        Circle _ => 3.00m, // В C# 8.0 переменную можно не объявлять (discard pattern)
+        Triangle => 5.00m, // В C# 9.0 можно вообще ничего не указывать
+            // Хоть что не равное null
+        { } => throw new ArgumentException(message: "Unknown shape type", paramName: nameof(shape)),
+            // Если пришло null
+        null => throw new ArgumentNullException(paramName: nameof(shape))
+
+        // _ => - для всего чего нет сверху
+    };
+
+Console.WriteLine(value: CalculateToll(shape: new Square(){Area=10m})); // 5.00
+```
+
+::: {.output .stream .stdout}
+    12.00
+:::
+:::
+
+::: {.cell .code execution_count="25" dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+static decimal CalculateToll(object shape) =>
+    shape switch
+    {
+        // Тут можно не боятся NullreferenceException,
+        // т.к. свойства будут проверятся если shape не null и экземпляр Square
+        Square { Area: > 200 } => 2.00m + 1.00m,
+        Square => 2.00m,
+
+            // Можно писать выражения
+        Triangle triangle when (triangle.Area + 5 == 120) => 6.00m,
+        // Triangle { Area: 115 } => 6m,
+        Triangle => 5.00m,
+
+        // Вложенные Switch Expression
+        Circle circle => circle.Area switch
+        {
+            80 => 1.00m,
+            90 => 2.00m,
+            _ => 3.00m
+        }
+    };
+
+Console.WriteLine(value: CalculateToll(shape: new Square() { Area = 240 })); // 3.00
+Console.WriteLine(value: CalculateToll(shape: new Triangle() { Area = 115 })); // 6.00
+Console.WriteLine(value: CalculateToll(shape: new Circle() { Area = 90 })); // 2.00
+Console.WriteLine(value: CalculateToll(shape: new Circle())); // 3.00
+```
+
+::: {.output .stream .stdout}
+    3.00
+    6.00
+    2.00
+    3.00
+:::
+:::
+
+::: {.cell .code execution_count="26" dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+static bool IsWeekDay(DateTime date) =>
+    date.DayOfWeek switch
+    {
+        DayOfWeek.Saturday => false,
+        DayOfWeek.Sunday => false,
+        _ => true
+    };
+
+// Определение времени суток
+static TimeOfTheDay GetTimeBand(DateTime date) =>
+    date.Hour switch
+    {
+        < 6 or > 19 => TimeOfTheDay.Night,
+        < 10 => TimeOfTheDay.Morning,
+        < 16 => TimeOfTheDay.Afternoon,
+        _ => TimeOfTheDay.Evening,
+    };
+
+// Расчет коэффициента в зависимости от дня недели и времени суток 
+static decimal PeakTimePremiumFull(DateTime date) =>
+    (IsWeekDay(date: date), GetTimeBand(date: date)) /* кортеж */ switch
+    {
+        // Сопоставление идет по-порядку и будет закончено как только будет найден подходящий вариант
+        (true, TimeOfTheDay.Morning) => 2.00m,
+        (true, TimeOfTheDay.Afternoon) => 1.50m,
+        (true, TimeOfTheDay.Night) => 0.75m,
+        (false, _) => 1.75m, // Можно применять discard pattern
+        _ => 1.0m
+    };
+
+Console.WriteLine(value: PeakTimePremiumFull(date: new DateTime(year: 2021, month: 2, day: 8, hour: 9, minute: 0, second: 0))); // 2.00
+```
+
+::: {.output .stream .stdout}
+    2.00
+:::
+:::
+
+::: {.cell .code execution_count="15" dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+static string IsFastCar(FancyCar car)
+{
+    if (car is { Engine.Name: "V8" })
+    {
+        return "Yes";
+    }
+    return "No";
+}
+
+Console.WriteLine(IsFastCar(new() { Engine = new() { Name = "V8" } }));
+```
+
+::: {.output .stream .stdout}
+    Yes
+:::
+:::
+
+::: {.cell .markdown}
+### Записи
+:::
+
+::: {.cell .code execution_count="28" dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+/*
+* Записи упрощают создание неизменяемых ссылочных типов.
+* Записи занимают промежуточное место межу классами и структурами.
+* Удобны для создания DTO.
+* На уровне IL кода это классы, но оптимизированные для многопоточной среды.
+*/
+
+private record Product
+{
+    public int Id { get; }
+    public string Description { get; init; }
+
+
+    public Product(int id, string description)
+    {
+        (Id, Description) = (id, description);
+    }
+}
+
+private record Vehicle : Product
+{
+    public int MaxSpeed { get; }
+
+    public Vehicle(int id, string description, int speed)
+        : base(id: id, description: description)
+    {
+        MaxSpeed = speed;
+    }
+}
+
+// Short syntax
+
+/*
+* Компилятор сам создаст конструктор и свойства
+*/
+
+private record Car(
+    int Id, 
+    string Description, 
+    object Test,
+    int MaxSpeed);
+
+
+/*
+* К сокращенной записи можно добавлять методы
+*/
+
+private record Bus(int Id, string Description, int MaxSpeed)
+    : Vehicle(id: Id, description: Description, speed: MaxSpeed)
+{
+    public override string ToString()
+    {
+        return "New result";
+    }
+}
+
+private record MyRecord
+{
+    public string Name { get; }
+    public MyRecord(string name) => Name = name;
+}
+```
+:::
+
+::: {.cell .code execution_count="30" dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+Product product1 = new Product(id: 1, description: "Some description");
+Product product2 = new Product(id: 1, description: "Some description");
+
+var car1 = new Car(Id: 1, Description: "Some description", Test: (Object)Guid.Parse(Guid.Empty.ToString()), MaxSpeed: 3);
+var car2 = new Car(Id: 1, Description: "Some description", Test: (Object)Guid.Parse(Guid.Empty.ToString()), MaxSpeed: 3);
+
+
+/*
+* Сравнение в record происходит по значением всех полей (включая приватные), а не по ссылкам как в классах
+* Переопределено сравнение.
+*/
+Console.WriteLine(value: car1 == car2); // true
+```
+
+::: {.output .stream .stdout}
+    False
+:::
+:::
+
+::: {.cell .code execution_count="31" dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+Product product = new Product(id: 1, description: "Some description");
+Vehicle vehicle = new Vehicle(id: 1, description: "Some description", speed: 120);
+
+/*
+* Сравнение происходит не только по всем полям, но и по типу.
+*/
+Console.WriteLine(value: product == vehicle); // false
+```
+
+::: {.output .stream .stdout}
+    False
+:::
+:::
+
+::: {.cell .code execution_count="32" dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+Product product = new Product(id: 1, description: "Some description");
+MyRecord record = new MyRecord(name: "Some name");
+
+/*
+* Сравнение разных типов записей вообще недопустимо
+*/
+
+Console.WriteLine(product == record); // ERROR
+```
+
+::: {.output .error ename="Error" evalue="(8,19): error CS0019: Operator '==' cannot be applied to operands of type 'Product' and 'MyRecord'"}
+    (8,19): error CS0019: Operator '==' cannot be applied to operands of type 'Product' and 'MyRecord'
+:::
+:::
+
+::: {.cell .code execution_count="36" dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+Product product = new Product(id: 1, description: "Some description");
+
+
+Console.WriteLine(value: product); // Product { Id = 1, Description = Some description }
+```
+
+::: {.output .stream .stdout}
+    Product { Id = 1, Description = Some description }
+    15
+:::
+:::
+
+::: {.cell .code execution_count="37" dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+Product? product1 = new Product(id: 1, description: "Some description");
+
+/*
+* Создание модификации записи с помощью with
+*/
+
+Product? product2 = product1 with
+{
+    Description = "New description"
+};
+
+Console.WriteLine(value: product2); // Product { Id = 1, Description = New description }
+```
+
+::: {.output .stream .stdout}
+    Product { Id = 1, Description = New description }
+:::
+:::
+
+::: {.cell .code execution_count="44" dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+Bus bus = new Bus(Description: "Some description", Id: 1, MaxSpeed: 90);
+
+/*
+* При сокращенном определении записей также создается и деконструктор
+*/
+
+(int id1, string? description, _) = bus;
+
+// Console.WriteLine(value: id1); // 1
+Console.WriteLine(value: description); // Some description
+Console.WriteLine(value: maxSpeed); // 90
+```
+
+::: {.output .stream .stdout}
+    Some description
+    1
+:::
+:::
+
+::: {.cell .markdown}
+### Статические лямбда-выражения (анонимные функции)
+:::
+
+::: {.cell .code execution_count="45" dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+public static void ShowMessage(Func<string, string> convert)
+{
+    Console.WriteLine(value: convert(arg: "Hello World!"));
+}
+
+public void Demo()
+{
+    string underline = "_";
+    ShowMessage(convert: myStr => myStr.Replace(oldValue: " ", newValue: underline));
+
+    //   ShowMessage(convert: static myStr => myStr.Replace(oldValue: " ", newValue: underline)); // A static anonymous function cannot contain a reference to 'underline'
+
+    const string dash = "-";
+    ShowMessage(convert: static myStr => myStr.Replace(oldValue: " ", newValue: dash));
+}
+
+Demo();
+```
+
+::: {.output .stream .stdout}
+    Hello_World!
+    Hello-World!
+:::
+:::
+
+::: {.cell .markdown}
+### Target-Typed Conditional Expression
+:::
+
+::: {.cell .code dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+// Явного приведение к int? не требуется
+int? number = false ? 1 : null;
+```
+:::
+
+::: {.cell .markdown}
+### Определение типа из контекста
+:::
+
+::: {.cell .code execution_count="47" dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+public class MyClass
+{
+    public MyClass()
+    {
+
+    }
+
+    public MyClass(int a)
+    {
+        SomeProperty = a;
+    }
+    public int SomeProperty { get; set; }
+}
+```
+:::
+
+::: {.cell .code dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+// Полная запись
+MyClass myClass1 = new MyClass();
+
+// Благодаря var более компактно
+var myClass2 = new MyClass();
+
+// Теперь доступен обратный синтаксис
+MyClass myClass3 = new();
+```
+:::
+
+::: {.cell .code dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+// Применение в методах
+static MyClass LocalMethod(DateTime dt)
+{
+    return new();
+}
+
+MyClass myClass = LocalMethod(dt: new(year: 2021, month: 2, day: 10));
+```
+:::
+
+::: {.cell .code execution_count="49" dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+// Применение в определении коллекций
+List<MyClass> list = new()
+{
+    new() { SomeProperty = 1 },
+    new() { SomeProperty = 2 },
+    new() { SomeProperty = 3 }
+};
+```
+
+::: {.output .error ename="Error" evalue="(5,5): error CS1950: The best overloaded Add method 'List<MyClass>.Add(MyClass)' for the collection initializer has some invalid arguments
+(5,5): error CS1503: Argument 1: cannot convert from '<anonymous type: int SomeProperty>' to 'MyClass'"}
+    (5,5): error CS1950: The best overloaded Add method 'List<MyClass>.Add(MyClass)' for the collection initializer has some invalid arguments
+
+    (5,5): error CS1503: Argument 1: cannot convert from '<anonymous type: int SomeProperty>' to 'MyClass'
+:::
+:::
+
+::: {.cell .markdown}
+### Top-Level Statement
+:::
+
+::: {.cell .code dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+using System;
+
+
+Console.WriteLine("ada");
+
+Console.WriteLine(value: args.Length);
+ShowMessage(message: "Some method!");
+Show.Message(message: "Some method from class!");
+Console.ReadLine();
+
+static void ShowMessage(string message)
+{
+    Console.WriteLine(value: message);
+}
+
+internal class Show
+{
+    internal static void Message(string message)
+    {
+        Console.WriteLine(value: message);
+    }
+}
+```
+:::
+
+::: {.cell .markdown}
+### Модульные инициализаторы
+:::
+
+::: {.cell .code execution_count="51" dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+using System.Runtime.CompilerServices;
+
+class Program
+    {
+        static int a = 100;
+
+        [ModuleInitializer]
+        public static void InitializerMethod1()
+        {
+            Console.WriteLine(value: "InitializerMethod1" + a.ToString());
+        }
+
+
+        [ModuleInitializer]
+        public static void InitializerMethod2()
+        {
+            Console.WriteLine(value: "InitializerMethod2");
+        }
+
+        static void Main(string[] args)
+        {
+            Console.WriteLine(value: "Main");
+            //Console.ReadLine();
+        }
+    }
+```
+
+::: {.output .stream .stdout}
+    InitializerMethod1100
+    InitializerMethod2
+:::
+:::
+
+::: {.cell .markdown}
+# C# 10 и версия .NET 6 {#c-10-и-версия-net-6}
+:::
+
+::: {.cell .markdown}
+### File-scoped namespace declaration (Объявление пространства имен в пределах файла)
+
+Top-Level Statement из C# 9 получил свое дальнейшее развитие:
+
+Program.cs для C# \<9:
+:::
+
+::: {.cell .code execution_count="1" dotnet_interactive="{\"language\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+using System;
+
+namespace MyApp // Note: actual namespace depends on the project name.
+{
+    internal class Program
+    {
+        static void Main(string[] args)
+        {
+            Console.WriteLine("Hello World!");
+        }
+    }
+}
+```
+
+::: {.output .error ename="Error" evalue="(3,1): error CS7021: Cannot declare namespace in script code"}
+    (3,1): error CS7021: Cannot declare namespace in script code
+:::
+:::
+
+::: {.cell .markdown}
+Program.cs для C# 9+
+:::
+
+::: {.cell .code execution_count="2" dotnet_interactive="{\"language\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+Console.WriteLine("Hello World");
+```
+
+::: {.output .stream .stdout}
+    Hello World
+:::
+:::
+
+::: {.cell .markdown}
+Развитие этой идеи для размещения в нескольких файлах:
+:::
+
+::: {.cell .code dotnet_interactive="{\"language\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+namespace TestApp.Namespace;
+
+public class Book
+{
+    public string Title;
+    public Author Author;
+    public Book (string title, Author author) => (Title, Author) = (title, author);
+}
+```
+:::
+
+::: {.cell .markdown}
+### Расширенные шаблоны свойств (Extended property patterns)
+
+Начиная с C# 10 можно ссылаться на вложенные свойства или поля в шаблоне
+свойства
+
+Расширим класс книги новым методом. Вариант для предыдущих версий:
+:::
+
+::: {.cell .code dotnet_interactive="{\"language\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+public class Author
+{
+    public string FirstName;
+    public string LastName;
+}
+
+public class Book
+{
+    public string Title;
+    public Author Author;
+    public Book (string title, Author author) => (Title, Author) = (title, author);
+
+    public static bool DoesHaveDiscount(Book book)
+    {
+        if (book is {Author: {LastName: "Richter" }} || book is {Author: {LastName: "Price" }}) return true;
+        return false;
+    }
+}
+```
+:::
+
+::: {.cell .markdown}
+Вариант для C# 10:
+:::
+
+::: {.cell .code dotnet_interactive="{\"language\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+public class Author
+{
+    public string FirstName;
+    public string LastName;
+}
+
+public class Book
+{
+    public string Title;
+    public Author Author;
+    public Book (string title, Author author) => (Title, Author) = (title, author);
+
+    public static bool DoesHaveDiscount(Book book)
+    {
+        if (book is {Author.LastName: "Richter" } || book is {Author.LastName: "Price" }) return true;
+        return false;
+    }
+}
+```
+:::
+
+::: {.cell .markdown}
+### Constant interpolated strings
+
+const могут быть инициализированы с помощью интерполяции строк, если все
+заполнители являются константными строками. Выражения заполнителей не
+могут быть числовыми константами, так как эти константы преобразуются в
+строки во время выполнения
+:::
+
+::: {.cell .code execution_count="52" dotnet_interactive="{\"language\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+const string ThankYou = "Спасибо за покупку.";
+const string ThankYouExtended = $"{ThankYou} Уходите еще.";
+Console.WriteLine(ThankYouExtended);
+```
+
+::: {.output .stream .stdout}
+    Спасибо за покупку. Уходите еще.
+:::
+:::
+
+::: {.cell .markdown}
+### Record-структуры
+
+Record-типы неизменяемы (Immutable). Record-классы добавлены в C# 9, в
+С# 10 теперь поддерживаются immutable-структуры.
+:::
+
+::: {.cell .code dotnet_interactive="{\"language\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+public record struct Person
+{
+    public string Name { get; }
+    public Person(string name) => Name = name;
+}
+```
+:::
+
+::: {.cell .markdown}
+### Конструктор для record-структур
+:::
+
+::: {.cell .code dotnet_interactive="{\"language\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+public record struct Person (string Name);
+```
+:::
+
+::: {.cell .markdown}
+### Конструктор без параметров для структур
+:::
+
+::: {.cell .code execution_count="16" dotnet_interactive="{\"language\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+public struct Person
+{
+    public string Name { get; }
+    public Person(string name) => Name = name;
+    public Person()
+    {
+        Name = "Акакий";
+    }
+}
+
+var p1 = new Person("Тест");
+Console.WriteLine(p1.Name);
+
+var p2 = default(Person);
+Console.WriteLine(p2.Name);
+
+var p3 = new Person();
+Console.WriteLine(p3.Name);
+
+```
+
+::: {.output .stream .stdout}
+    Тест
+
+    Акакий
+:::
+:::
+
+::: {.cell .markdown}
+### With для структур
+
+Выражение with, доступное в C# 9.0 и более поздних версиях, создает
+копию своего операнда с измененными заданными свойствами и полями. В C#
+9.0 левый операнд в выражении with должен иметь тип записи. Начиная с C#
+10, левый операнд выражения with также может иметь тип структуры или
+анонимный тип.
+:::
+
+::: {.cell .code execution_count="53" dotnet_interactive="{\"language\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+public record struct NamedPoint(string Name, int X, int Y);
+
+var p1 = new NamedPoint("A", 0, 0);
+Console.WriteLine($"{nameof(p1)}: {p1}"); 
+
+var p2 = p1 with { Name = "B", X = 5 };
+Console.WriteLine($"{nameof(p2)}: {p2}");
+```
+
+::: {.output .stream .stdout}
+    p1: NamedPoint { Name = A, X = 0, Y = 0 }
+    p2: NamedPoint { Name = B, X = 5, Y = 0 }
+:::
+:::
+
+::: {.cell .markdown}
+### Запечатывание ToString
+:::
+
+::: {.cell .code execution_count="55" dotnet_interactive="{\"language\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+public record Person
+{
+    public string Name { get; }
+    public Person(string name) => Name = name;
+    public sealed override string ToString()
+    {
+        return typeof(Person).Name;
+    }
+}
+
+public record User: Person
+{
+    public User(string name):base(name){}
+    public override string ToString()
+    {
+        return typeof(User).Name;
+    }
+}
+```
+
+::: {.output .error ename="Error" evalue="(14,28): error CS0239: 'User.ToString()': cannot override inherited member 'Person.ToString()' because it is sealed"}
+    (14,28): error CS0239: 'User.ToString()': cannot override inherited member 'Person.ToString()' because it is sealed
+:::
+:::
+
+::: {.cell .markdown}
+### Улучшение деконструкции
+:::
+
+::: {.cell .code dotnet_interactive="{\"language\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+public class Author
+{
+    public string FirstName;
+    public string LastName;
+
+    public Author(string firstName, string lastName)
+    {
+        FirstName = firstName;
+        LastName = lastName;
+    }
+
+    public void Deconstruct(out string firstName, out string lastName)
+    {
+        firstName = FirstName;
+        lastName = LastName;
+    }
+}
+
+var author = new Author("Mikhail","Bulgakov");
+
+(string name1, string lastName1) = author;
+Console.WriteLine(name1);
+Console.WriteLine(lastName1);
+
+
+string name2 = string.Empty;
+string lastName2 = string.Empty;
+(name2, lastName2) = author;
+Console.WriteLine(name2);
+Console.WriteLine(lastName2);
+
+
+//--C# 10--
+(name2, var lastName3) = author;
+Console.WriteLine(name2);
+Console.WriteLine(lastName3);
+```
+:::
+
+::: {.cell .markdown}
+### Глобальные директивы Using
+:::
+
+::: {.cell .code dotnet_interactive="{\"language\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+global using System.Collections.Generic;
+global using System.Linq;
+```
+:::
+
+::: {.cell .markdown}
+# C# 11 и версия .NET 7 {#c-11-и-версия-net-7}
+
+### Паттерны списков
+:::
+
+::: {.cell .code dotnet_interactive="{\"language\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+Console.WriteLine(GetNumber(new[] { 2, 3, 5 }));        // 1
+Console.WriteLine(GetNumber(new[] { 2, 4, 5 }));        // 2
+Console.WriteLine(GetNumber(new[] { 2, 3, 4, 5 }));     // 3
+Console.WriteLine(GetNumber(new[] { 1, 2, 3 }));        // 4
+Console.WriteLine(GetNumber(new int[] { }));            // 4
+ 
+int GetNumber(int[] values) => values switch
+{
+    [2, 3, 5] => 1,
+    [2, _, 5] => 2,
+    [2, .., 5] => 3,
+    [..] => 4
+};
+```
+:::
+
+::: {.cell .markdown}
+### Обобщения в атрибутах
+:::
+
+::: {.cell .code dotnet_interactive="{\"language\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+class C
+{
+    [Reader<int>]
+    public void M() 
+    {
+    }
+}
+ 
+class ReaderAttribute<T> : Attribute
+{
+}
+```
+:::
+
+::: {.cell .markdown}
+### Многострочные строки
+
+С помощью трех пар двойных кавычек можно оформить многострочный текст, в
+том числе с применением интерполяции:
+:::
+
+::: {.cell .code dotnet_interactive="{\"language\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+Print();
+PrintValue("hello");
+ 
+void Print()
+{
+    string text = """
+              <element attr="content">
+                <body>
+                </body>
+              </element>
+              """;
+    Console.WriteLine(text);
+}
+ 
+void PrintValue(string val)
+{
+    string text = $"""
+              <element attr="content">
+                <body>
+                {val}
+                </body>
+              </element>
+              """;
+    Console.WriteLine(text);
+}
+```
+:::
+
+::: {.cell .markdown}
+### Строковые литералы UTF-8
+
+C# 11 позволяет автоматически сконвертировать строки с символами UTF-8 в
+их бинарное представление.
+:::
+
+::: {.cell .code dotnet_interactive="{\"language\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+// C# 10
+byte[] message1 = System.Text.Encoding.UTF8.GetBytes("hello");
+ 
+// C# 11
+byte[] message2 = "hello";
+```
+:::
+
+::: {.cell .markdown}
+### String interpolation (new line)
+:::
+
+::: {.cell .code dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+int[] arrayToFilter = { 1, 2, 3, 4, 56, 241, 12, 4712, 4888812, 400012 };
+Console.WriteLine($"Array is [{string.Join(", ", arrayToFilter
+    .Where(x => x % 2 == 0))}]");
+```
+:::
+
+::: {.cell .markdown}
+### INumber
+:::
+
+::: {.cell .code execution_count="21" dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+using System.Numerics;
+
+var ints = new[] { 1, 2, 3, 4, 5, 6 };
+var doubles = new[] { 4.0, 44.0 };
+
+double Avg<T>(T[] numbers)
+    where T : INumber<T>
+{
+
+    T sum = T.Zero;
+    foreach (var n in numbers)
+    {
+        sum += n;
+    }
+
+    var l1 = double.CreateChecked(numbers.Length);
+    var s1 = double.CreateChecked(sum);
+    return numbers.Length == 0 ? 0.0 : s1 / l1;
+}
+```
+:::
+
+::: {.cell .markdown}
+### File Class
+:::
+
+::: {.cell .code dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+file class FileClass
+{
+    static void Main(string[] args)
+    {
+        Console.WriteLine("Hello World!");
+    }
+}
+```
+:::
+
+::: {.cell .markdown}
+# C# 12 и версия .NET 8 {#c-12-и-версия-net-8}
+:::
+
+::: {.cell .markdown}
+### Primary constructors
+:::
+
+::: {.cell .code dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+public class Person(string name, int age)
+{
+    public Person(string name) : this(name, 18) { }
+    public string Name => name;
+    public int Age => age;
+ 
+    public override string ToString() => $"name: {name}, age: {age}";
+}
+```
+:::
+
+::: {.cell .markdown}
+### Выражения коллекции
+:::
+
+::: {.cell .code execution_count="17" dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+int[] row0 = [1, 2, 4];
+int[] row1 = [4, 5, 6];
+int[] row2 = [7, 8, 9];
+int[] single = [..row0, ..row1, ..row2];
+foreach (var element in single)
+{
+    Console.Write($"{element}, ");
+}
+// output:
+// 1, 2, 3, 4, 5, 6, 7, 8, 9,
+```
+
+::: {.output .error ename="Error" evalue="(1,14): error CS1525: Invalid expression term '['
+(2,14): error CS1525: Invalid expression term '['
+(3,14): error CS1525: Invalid expression term '['
+(4,16): error CS1525: Invalid expression term '['"}
+    (1,14): error CS1525: Invalid expression term '['
+
+    (2,14): error CS1525: Invalid expression term '['
+
+    (3,14): error CS1525: Invalid expression term '['
+
+    (4,16): error CS1525: Invalid expression term '['
+:::
+:::
+
+::: {.cell .markdown}
+### Параметры лямбда-кода по умолчанию
+:::
+
+::: {.cell .code execution_count="18" dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+var welcome = (string message = "hello")=> Console.WriteLine(message);
+ 
+welcome("hello world"); // hello world
+welcome();              // hello
+```
+
+::: {.output .error ename="Error" evalue="(1,31): error CS8652: The feature 'lambda optional parameters' is currently in Preview and *unsupported*. To use Preview features, use the 'preview' language version."}
+    (1,31): error CS8652: The feature 'lambda optional parameters' is currently in Preview and *unsupported*. To use Preview features, use the 'preview' language version.
+:::
+:::
+
+::: {.cell .markdown}
+### Псевдоним любого типа
+:::
+
+::: {.cell .code execution_count="22" dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+using People = System.Collections.Generic.List<Person>;
+ 
+People people = new(){ new ("Tom", 38), new ("Bob", 42) };
+
+public record Person(string Name, int Age);
+```
+:::
+
+::: {.cell .code dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+using user = (string, int);
+user tom = ("Tom", 38);
+Console.WriteLine(tom);     // (Tom, 38)
+```
+:::
+
+::: {.cell .markdown}
+### Методы для работы с случайностью
+:::
+
+::: {.cell .code dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+private static ReadOnlySpan<Button> s_allButtons = new[]
+{
+    Button.Red,
+    Button.Green,
+    Button.Blue,
+    Button.Yellow,
+};
+
+
+Button[] thisRound = Random.Shared.GetItems(s_allButtons, 31);
+```
+:::
+
+::: {.cell .code dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+YourType[] trainingData = LoadTrainingData();
+Random.Shared.Shuffle(trainingData);
+```
+:::
+
+::: {.cell .markdown}
+### Типы, ориентированные на производительность
+:::
+
+::: {.cell .code dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+private static readonly FrozenDictionary<string, bool> s_configurationData =
+    LoadConfigurationData().ToFrozenDictionary(optimizeForReads: true);
+```
+:::
+
+::: {.cell .markdown}
+### Использование Сервисов по Ключу
+:::
+
+::: {.cell .code execution_count="24" dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+public interface IVehicle
+{
+  int NoOfWheels { get; }
+}
+
+public class Car : IVehicle
+{
+  public int NoOfWheels => 4;
+}
+public class Bike : IVehicle
+{
+  public int NoOfWheels => 2;
+}
+```
+:::
+
+::: {.cell .code dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+builder.Services.AddKeyedScoped<IVehicle, Car>("car");
+builder.Services.AddKeyedScoped<IVehicle, Bike>("bike");
+```
+:::
+
+::: {.cell .code dotnet_interactive="{\"language\":\"csharp\"}" polyglot_notebook="{\"kernelName\":\"csharp\"}" vscode="{\"languageId\":\"polyglot-notebook\"}"}
+``` C#
+[ApiController]
+public class VehicleApiController : Controller
+{
+  [HttpGet("carweels")]
+  public IActionResult CarWheels(
+    [FromKeyedServices("car")] IVehicle v)
+  {
+    return Ok(new {
+      CarWheels = v.NoOfWheels,
+    });
+  }
+}
+```
+:::
+
+::: {.cell .markdown}
+![image.png](vertopal_1b280fcf05cc4323bdfb6ad2287cc7c6/image.png)
+:::
